@@ -10,8 +10,12 @@ app.use(express.json());
 // Importamos las rutas de la categoria
 const categoriaRoutes = require("./src/routers/categoria.routes");
 
+const activoRoutes = require("./src/routers/activo.routes");
+
 // Implementar rutas
 app.use('/api/categorias', categoriaRoutes);
+app.use('/api/activos', activoRoutes);
+
 
 // Ruta general de toda la app
 // http://localhost:3000
