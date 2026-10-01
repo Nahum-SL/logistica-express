@@ -11,7 +11,7 @@ app.use(express.json());
 const categoriaRoutes = require("./src/routers/categoria.routes");
 
 // Implementar rutas
-app.use('api/categorias', categoriaRoutes);
+app.use('/api/categorias', categoriaRoutes);
 
 // Ruta general de toda la app
 // http://localhost:3000
