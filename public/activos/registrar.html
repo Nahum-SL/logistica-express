@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Listado de Activos</title>
+
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 30px 15px;
+        font-family: Arial, sans-serif;
+        background-color: #f3f4f6;
+        color: #1f2937;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 1200px;
+        margin: auto;
+        padding: 25px;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 20px;
+      }
+
+      h1 {
+        margin: 0;
+      }
+
+      .btn {
+        display: inline-block;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 6px;
+        text-decoration: none;
+        cursor: pointer;
+        font-size: 14px;
+      }
+
+      .btn-primary {
+        background-color: #2563eb;
+        color: white;
+      }
+
+      .btn-edit {
+        background-color: #f59e0b;
+        color: white;
+      }
+
+      .btn-delete {
+        background-color: #dc2626;
+        color: white;
+      }
+
+      .btn:hover {
+        opacity: 0.9;
+      }
+
+      .table-container {
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      th {
+        background-color: #f9fafb;
+      }
+
+      .acciones {
+        display: flex;
+        gap: 8px;
+      }
+
+      .mensaje {
+        padding: 12px;
+        margin-bottom: 15px;
+        border-radius: 6px;
+      }
+
+      .vacio {
+        text-align: center;
+        color: #6b7280;
+        padding: 25px;
+      }
+
+      .foto {
+        max-width: 80px;
+        max-height: 60px;
+        object-fit: contain;
+      }
+
+      @media (max-width: 700px) {
+        .header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .acciones {
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <main class="container">
+      <div class="header">
+        <h1>
+            <a href="listar.html" class="btn btn-secondary">Volver</a>
+        </h1>
+
+        <a href="registrar.html" class="btn btn-primary"> + Nuevo activo </a>
+      </div>
+
+      <div id="mensaje"></div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Categoría</th>
+              <th>Descripción</th>
+              <th>Fotografía</th>
+              <th>Estado</th>
+              <th>Precio</th>
+              <th>Fecha registro</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+
+          <tbody id="tablaActivos">
+            <tr>
+              <td colspan="8" class="vacio">Cargando activos...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+
+    <script>
+      const API_URL = "http://localhost:3000/api/activos";
+
+      const tablaActivos = document.getElementById("tablaActivos");
+
+      const mensaje = document.getElementById("mensaje");
+
+      // ==========================================
+      // LISTAR ACTIVOS
+      // GET /api/activos
+      // ==========================================
+
+      async function obtenerActivos() {
+        try {
+          const response = await fetch(API_URL);
+
+          const resultado = await response.json();
+
+          if (!response.ok || !resultado.success) {
+            throw new Error(resultado.message || "Error al obtener activos");
+          }
+
+          mostrarActivos(resultado.data);
+        } catch (error) {
+          console.error(error);
+
+          tablaActivos.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="vacio">
+                            Error al cargar los activos.
+                        </td>
+                    </tr>
+                `;
+        }
+      }
+
+      // ==========================================
+      // MOSTRAR ACTIVOS
+      // ==========================================
+
+      function mostrarActivos(activos) {
+        tablaActivos.innerHTML = "";
+
+        if (activos.length === 0) {
+          tablaActivos.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="vacio">
+                            No existen activos registrados.
+                        </td>
+                    </tr>
+                `;
+
+          return;
+        }
+
+        activos.forEach((activo) => {
+          const fila = document.createElement("tr");
+
+          const fotografia = activo.fotografia
+            ? activo.fotografia
+            : "Sin fotografía";
+
+          fila.innerHTML = `
+
+                    <td>${activo.id}</td>
+
+                    <td>${activo.idcategoria}</td>
+
+                    <td>${activo.descripcion}</td>
+
+                    <td>${fotografia}</td>
+
+                    <td>${activo.estado}</td>
+
+                    <td>S/ ${Number(activo.precio).toFixed(2)}</td>
+
+                    <td>
+                        ${formatearFecha(activo.fecharegistro)}
+                    </td>
+
+                    <td>
+
+                        <div class="acciones">
+
+                            <button
+                                class="btn btn-edit"
+                                onclick="editarActivo(${activo.id})">
+                                Editar
+                            </button>
+
+                            <button
+                                class="btn btn-delete"
+                                onclick="eliminarActivo(${activo.id})">
+                                Eliminar
+                            </button>
+
+                        </div>
+
+                    </td>
+
+                `;
+
+          tablaActivos.appendChild(fila);
+        });
+      }
+
+      // ==========================================
+      // FORMATEAR FECHA
+      // ==========================================
+
+      function formatearFecha(fecha) {
+        if (!fecha) {
+          return "-";
+        }
+
+        const fechaFormateada = new Date(fecha);
+
+        return fechaFormateada.toLocaleString("es-PE");
+      }
+
+      // ==========================================
+      // EDITAR
+      // ==========================================
+
+      function editarActivo(id) {
+        window.location.href = `registrar.html?id=${id}`;
+      }
+
+      // ==========================================
+      // ELIMINAR
+      // DELETE /api/activos/:id
+      // ==========================================
+
+      async function eliminarActivo(id) {
+        const confirmar = confirm("¿Está seguro de eliminar este activo?");
+
+        if (!confirmar) {
+          return;
+        }
+
+        try {
+          const response = await fetch(`${API_URL}/${id}`, {
+            method: "DELETE",
+          });
+
+          const resultado = await response.json();
+
+          if (!response.ok || !resultado.success) {
+            throw new Error(resultado.message || "Error al eliminar activo");
+          }
+
+          mostrarMensaje(resultado.message, false);
+
+          obtenerActivos();
+        } catch (error) {
+          console.error(error);
+
+          mostrarMensaje(error.message, true);
+        }
+      }
+
+      // ==========================================
+      // MENSAJES
+      // ==========================================
+
+      function mostrarMensaje(texto, error) {
+        mensaje.innerHTML = `
+
+                <div
+                    class="mensaje"
+                    style="
+                        background-color: ${error ? "#fef2f2" : "#ecfdf5"};
+                        color: ${error ? "#b91c1c" : "#047857"};
+                    "
+                >
+                    ${texto}
+                </div>
+
+            `;
+      }
+
+      // ==========================================
+      // INICIAR
+      // ==========================================
+
+      obtenerActivos();
+    </script>
+  </body>
+</html>

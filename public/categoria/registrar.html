@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Registrar Categoría</title>
+
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 30px 15px;
+        font-family: Arial, sans-serif;
+        background-color: #f3f4f6;
+        color: #1f2937;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 500px;
+        margin: 50px auto;
+        padding: 25px;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      }
+
+      h1 {
+        margin-top: 0;
+        margin-bottom: 25px;
+      }
+
+      .campo {
+        margin-bottom: 20px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+      }
+
+      input {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 16px;
+      }
+
+      input:focus {
+        outline: none;
+        border-color: #2563eb;
+      }
+
+      .acciones {
+        display: flex;
+        gap: 10px;
+      }
+
+      button,
+      .btn {
+        padding: 11px 16px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        text-decoration: none;
+      }
+
+      .btn-primary {
+        background-color: #2563eb;
+        color: white;
+      }
+
+      .btn-secondary {
+        background-color: #e5e7eb;
+        color: #1f2937;
+      }
+
+      button:hover,
+      .btn:hover {
+        opacity: 0.9;
+      }
+
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .mensaje {
+        padding: 12px;
+        margin-bottom: 20px;
+        border-radius: 6px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <main class="container">
+      <h1 id="titulo">Registrar categoría</h1>
+
+      <div id="mensaje"></div>
+
+      <form id="formCategoria">
+        <div class="campo">
+          <label for="categoria"> Categoría </label>
+
+          <input
+            type="text"
+            id="categoria"
+            name="categoria"
+            maxlength="100"
+            placeholder="Ingrese la categoría"
+            required
+          />
+        </div>
+
+        <div class="acciones">
+          <button type="submit" id="btnGuardar" class="btn-primary">
+            Registrar
+          </button>
+
+          <a href="listar.html" class="btn btn-secondary"> Cancelar </a>
+        </div>
+      </form>
+    </main>
+
+    <script>
+      const API_URL = "http://localhost:3000/api/categorias";
+
+      const formulario = document.getElementById("formCategoria");
+
+      const inputCategoria = document.getElementById("categoria");
+
+      const titulo = document.getElementById("titulo");
+
+      const btnGuardar = document.getElementById("btnGuardar");
+
+      const mensaje = document.getElementById("mensaje");
+
+      // ==========================================
+      // DETECTAR SI ES CREATE O UPDATE
+      // ==========================================
+
+      const parametros = new URLSearchParams(window.location.search);
+
+      const id = parametros.get("id");
+
+      const modoEdicion = id !== null;
+
+      // ==========================================
+      // SI ES UPDATE
+      // GET /api/categorias/:id
+      // ==========================================
+
+      async function cargarCategoria() {
+        if (!modoEdicion) {
+          return;
+        }
+
+        titulo.textContent = "Actualizar categoría";
+
+        btnGuardar.textContent = "Guardar cambios";
+
+        try {
+          const response = await fetch(`${API_URL}/${id}`);
+
+          const resultado = await response.json();
+
+          if (!response.ok || !resultado.success) {
+            throw new Error(resultado.message || "No se encontró la categoría");
+          }
+
+          inputCategoria.value = resultado.data.categoria;
+        } catch (error) {
+          console.error(error);
+
+          mostrarMensaje(error.message, true);
+
+          btnGuardar.disabled = true;
+        }
+      }
+
+      // ==========================================
+      // CREATE / UPDATE
+      // ==========================================
+
+      formulario.addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        const categoria = inputCategoria.value.trim();
+
+        // Validación
+        if (!categoria) {
+          mostrarMensaje("El campo categoría es obligatorio.", true);
+
+          inputCategoria.focus();
+
+          return;
+        }
+
+        let url = API_URL;
+
+        let metodo = "POST";
+
+        // Si existe ID -> UPDATE
+        if (modoEdicion) {
+          url = `${API_URL}/${id}`;
+
+          metodo = "PUT";
+        }
+
+        btnGuardar.disabled = true;
+
+        try {
+          const response = await fetch(url, {
+            method: metodo,
+
+            headers: {
+              "Content-Type": "application/json",
+            },
+
+            body: JSON.stringify({
+              categoria: categoria,
+            }),
+          });
+
+          const resultado = await response.json();
+
+          if (!response.ok || !resultado.success) {
+            throw new Error(
+              resultado.message || "Error al guardar la categoría",
+            );
+          }
+
+          mostrarMensaje(resultado.message, false);
+
+          // Regresar al listado
+          setTimeout(() => {
+            window.location.href = "listar.html";
+          }, 500);
+        } catch (error) {
+          console.error(error);
+
+          mostrarMensaje(error.message, true);
+
+          btnGuardar.disabled = false;
+        }
+      });
+
+      // ==========================================
+      // MOSTRAR MENSAJES
+      // ==========================================
+
+      function mostrarMensaje(texto, error) {
+        mensaje.innerHTML = `
+
+                <div
+                    class="mensaje"
+                    style="
+                        background-color: ${error ? "#fef2f2" : "#ecfdf5"};
+                        color: ${error ? "#b91c1c" : "#047857"};
+                    "
+                >
+
+                    ${texto}
+
+                </div>
+
+            `;
+      }
+
+      // ==========================================
+      // INICIALIZAR
+      // ==========================================
+
+      cargarCategoria();
+    </script>
+  </body>
+</html>

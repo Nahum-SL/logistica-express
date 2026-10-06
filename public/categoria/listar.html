@@ -1,13 +1,314 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
-</head>
-<body>
-  <h1>Categoria</h1>
-  <!--Multer para imagenes opcional-->
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Listado de Categorías</title>
 
-</body>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 30px 15px;
+        font-family: Arial, sans-serif;
+        background-color: #f3f4f6;
+        color: #1f2937;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 800px;
+        margin: auto;
+        padding: 25px;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        gap: 15px;
+      }
+
+      h1 {
+        margin: 0;
+      }
+
+      .btn {
+        display: inline-block;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 6px;
+        text-decoration: none;
+        cursor: pointer;
+        font-size: 14px;
+      }
+
+      .btn-primary {
+        background-color: #2563eb;
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background-color: #1d4ed8;
+      }
+
+      .btn-edit {
+        background-color: #f59e0b;
+        color: white;
+      }
+
+      .btn-delete {
+        background-color: #dc2626;
+        color: white;
+      }
+
+      .btn:hover {
+        opacity: 0.9;
+      }
+
+      .table-container {
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #e5e7eb;
+      }
+
+      th {
+        background-color: #f9fafb;
+      }
+
+      .acciones {
+        display: flex;
+        gap: 8px;
+      }
+
+      .mensaje {
+        padding: 12px;
+        margin-bottom: 15px;
+        border-radius: 6px;
+        background-color: #eff6ff;
+        color: #1d4ed8;
+      }
+
+      .vacio {
+        text-align: center;
+        color: #6b7280;
+        padding: 25px;
+      }
+
+      @media (max-width: 600px) {
+        .header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .acciones {
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <main class="container">
+      <div class="header">
+        <h1>Categorías</h1>
+
+        <a href="registrar.html" class="btn btn-primary"> + Nueva categoría </a>
+      </div>
+
+      <div id="mensaje"></div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Categoría</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+
+          <tbody id="tablaCategorias">
+            <tr>
+              <td colspan="3" class="vacio">Cargando categorías...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+
+    <script>
+      const API_URL = "http://localhost:3000/api/categorias";
+
+      const tablaCategorias = document.getElementById("tablaCategorias");
+
+      const mensaje = document.getElementById("mensaje");
+
+      // ==========================================
+      // LISTAR CATEGORÍAS
+      // GET /api/categorias
+      // ==========================================
+
+      async function obtenerCategorias() {
+        try {
+          const response = await fetch(API_URL);
+
+          const resultado = await response.json();
+
+          if (!response.ok || !resultado.success) {
+            throw new Error(resultado.message || "Error al obtener categorías");
+          }
+
+          mostrarCategorias(resultado.data);
+        } catch (error) {
+          console.error(error);
+
+          tablaCategorias.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="vacio">
+                            Error al cargar las categorías
+                        </td>
+                    </tr>
+                `;
+        }
+      }
+
+      // ==========================================
+      // MOSTRAR CATEGORÍAS EN LA TABLA
+      // ==========================================
+
+      function mostrarCategorias(categorias) {
+        tablaCategorias.innerHTML = "";
+
+        if (categorias.length === 0) {
+          tablaCategorias.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="vacio">
+                            No existen categorías registradas.
+                        </td>
+                    </tr>
+                `;
+
+          return;
+        }
+
+        categorias.forEach((categoria) => {
+          const fila = document.createElement("tr");
+
+          fila.innerHTML = `
+
+                    <td>${categoria.id}</td>
+
+                    <td>${categoria.categoria}</td>
+
+                    <td>
+
+                        <div class="acciones">
+
+                            <button
+                                class="btn btn-edit"
+                                onclick="editarCategoria(${categoria.id})">
+                                Editar
+                            </button>
+
+                            <button
+                                class="btn btn-delete"
+                                onclick="eliminarCategoria(${categoria.id})">
+                                Eliminar
+                            </button>
+
+                        </div>
+
+                    </td>
+                `;
+
+          tablaCategorias.appendChild(fila);
+        });
+      }
+
+      // ==========================================
+      // EDITAR
+      // Redirige al mismo formulario
+      // ==========================================
+
+      function editarCategoria(id) {
+        window.location.href = `registrar.html?id=${id}`;
+      }
+
+      // ==========================================
+      // ELIMINAR
+      // DELETE /api/categorias/:id
+      // ==========================================
+
+      async function eliminarCategoria(id) {
+        const confirmar = confirm("¿Está seguro de eliminar esta categoría?");
+
+        if (!confirmar) {
+          return;
+        }
+
+        try {
+          const response = await fetch(`${API_URL}/${id}`, {
+            method: "DELETE",
+          });
+
+          const resultado = await response.json();
+
+          if (!response.ok || !resultado.success) {
+            throw new Error(resultado.message || "Error al eliminar categoría");
+          }
+
+          mostrarMensaje(resultado.message, false);
+
+          // Volver a cargar la tabla
+          obtenerCategorias();
+        } catch (error) {
+          console.error(error);
+
+          mostrarMensaje(error.message, true);
+        }
+      }
+
+      // ==========================================
+      // MENSAJES
+      // ==========================================
+
+      function mostrarMensaje(texto, error) {
+        mensaje.innerHTML = `
+                <div
+                    class="mensaje"
+                    style="
+                        background-color: ${error ? "#fef2f2" : "#ecfdf5"};
+                        color: ${error ? "#b91c1c" : "#047857"};
+                    "
+                >
+                    ${texto}
+                </div>
+            `;
+      }
+
+      // ==========================================
+      // INICIAR
+      // ==========================================
+
+      obtenerCategorias();
+    </script>
+  </body>
 </html>

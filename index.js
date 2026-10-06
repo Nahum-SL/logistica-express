@@ -12,6 +12,11 @@ const categoriaRoutes = require("./src/routers/categoria.routes");
 
 const activoRoutes = require("./src/routers/activo.routes");
 
+// CORS 
+const cors = require("cors");
+
+
+app.use(cors());
 // Implementar rutas
 app.use('/api/categorias', categoriaRoutes);
 app.use('/api/activos', activoRoutes);
